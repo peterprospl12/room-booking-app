@@ -1,0 +1,39 @@
+﻿@model Lab2.ViewModels.LoginViewModel
+@{
+	ViewData["Title"] = "Logowanie";
+}
+
+<div class="row justify-content-center">
+	<div class="col-md-4">
+		<h2 class="text-center mb-4">Logowanie</h2>
+        
+		<form asp-controller="Account" asp-action="Login" method="post">
+			<div class="mb-3">
+				<label asp-for="Email" class="form-label">Email</label>
+				<input asp-for="Email" class="form-control" type="email" placeholder="Wprowadź email" />
+				<span asp-validation-for="Email" class="text-danger"></span>
+			</div>
+            
+			<div class="mb-3">
+				<label asp-for="Password" class="form-label">Hasło</label>
+				<input asp-for="Password" class="form-control" type="password" placeholder="Wprowadź hasło" />
+				<span asp-validation-for="Password" class="text-danger"></span>
+			</div>
+            
+			<div class="d-grid gap-2">
+				<button type="submit" class="btn btn-primary">Zaloguj się</button>
+			</div>
+		</form>
+        
+		<hr class="my-4" />
+        
+		<div class="text-center">
+			<p>Nie masz konta?</p>
+			<a asp-controller="Account" asp-action="Register" class="btn btn-outline-secondary">Zarejestruj się</a>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+	<partial name="_ValidationScriptsPartial" />
+}
