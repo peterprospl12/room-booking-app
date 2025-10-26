@@ -23,5 +23,45 @@ namespace Lab2.Models.DTOs
 
         [Required(ErrorMessage = "End time is required")]
         public DateTime EndTime { get; init; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            var errors = new List<ValidationResult>();
+
+            if (StartTime >= EndTime)
+            {
+                errors.Add(new ValidationResult(
+                    "Start time must be before end time",
+                    [nameof(StartTime), nameof(EndTime)]
+                ));
+            }
+
+            if (StartTime < DateTime.Now)
+            {
+                errors.Add(new ValidationResult(
+                    "Cannot create booking in the past",
+                    [nameof(StartTime)]
+                ));
+            }
+
+            var duration = EndTime - StartTime;
+            if (duration.TotalMinutes < 15)
+            {
+                errors.Add(new ValidationResult(
+                    "Booking duration must be at least 15 minutes",
+                    [nameof(StartTime), nameof(EndTime)]
+                ));
+            }
+
+            if (duration.TotalHours > 3)
+            {
+                errors.Add(new ValidationResult(
+                    "Booking duration cannot exceed 3 hours",
+                    [nameof(StartTime), nameof(EndTime)]
+                ));
+            }
+
+            return errors;
+        }
     }
 }

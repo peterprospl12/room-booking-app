@@ -33,34 +33,9 @@ namespace Lab2.Controllers
             );
 
             viewModel.Rooms = roomsResult.IsSuccess ? roomsResult.Value : new List<RoomDto>();
-            viewModel.Bookings = bookingsResult.IsSuccess ? bookingsResult.Value : new List<BookingDto>();
+            viewModel.Bookings = new List<BookingDto>(); 
 
             return View(viewModel);
-        }
-
-        [HttpPost]
-        public IActionResult CreateBooking([FromBody] CreateBookingDto dto)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var userId = User.GetUserId();
-
-            if (userId == null)
-            {
-                return Unauthorized(new { error = "User not authenticated" });
-            }
-
-            var result = bookingService.CreateBooking(dto, userId.Value);
-
-            if (result.IsFailed)
-            {
-                return BadRequest(new { error = result.Errors.FirstOrDefault()?.Message });
-            }
-
-            return Ok(new { success = true, booking = result.Value });
         }
 
         [HttpDelete]

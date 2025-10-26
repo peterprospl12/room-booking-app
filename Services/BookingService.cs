@@ -58,6 +58,14 @@ namespace Lab2.Services
             }
         }
 
+        public Result<IEnumerable<BookingDto>> GetBookingsForDay(DateTime date)
+        {
+            var dayStart = date.Date;
+            var dayEnd = date.Date.AddDays(1);
+
+            return GetBookingsForPeriod(dayStart, dayEnd);
+        }
+
         public Result<BookingDto> CreateBooking(CreateBookingDto dto, int userId)
         {
             var room = repository.GetRoom(dto.RoomId);
@@ -67,14 +75,10 @@ namespace Lab2.Services
                 return Result.Fail<BookingDto>("Room not found");
             }
 
-            if (dto.StartTime >= dto.EndTime)
+            var user = repository.GetUserById(userId);
+            if (user == null)
             {
-                return Result.Fail("Cannot create booking in the past");
-            }
-
-            if (dto.StartTime < DateTime.Now)
-            {
-                return Result.Fail("Cannot create booking in the past");
+                return Result.Fail<BookingDto>("User not found");
             }
 
             var existingBookings = repository.GetBookingsForRoom(dto.RoomId);
@@ -97,13 +101,6 @@ namespace Lab2.Services
             if (!repository.AddBooking(booking))
             {
                 return Result.Fail("Failed to create booking in repository");
-            }
-
-            var user = repository.GetUserById(booking.UserId);
-
-            if (user == null)
-            {
-                return Result.Fail("User who is booking the slot does not exist ");
             }
 
             var bookingDto = new BookingDto(

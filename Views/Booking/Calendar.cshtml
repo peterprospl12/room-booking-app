@@ -1,4 +1,5 @@
-﻿@using Lab2.ViewModels
+﻿@using Lab2.Extensions
+@using Lab2.ViewModels
 @model Lab2.ViewModels.CalendarViewModel
 @{
     ViewData["Title"] = "Kalendarz rezerwacji";
@@ -10,24 +11,41 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h2>Kalendarz rezerwacji sal</h2>
                 <div class="btn-group" role="group">
-                    <a asp-action="Calendar" asp-route-date="@Model.SelectedDate.AddDays(-7)" asp-route-viewMode="@Model.ViewMode"
-                       class="btn btn-outline-primary">
-                        <i class="bi bi-chevron-left"></i> Poprzedni
-                    </a>
-                    <a asp-action="Calendar" asp-route-viewMode="@Model.ViewMode" class="btn btn-outline-primary">
-                        Dzisiaj
-                    </a>
-                    <a asp-action="Calendar" asp-route-date="@Model.SelectedDate.AddDays(7)" asp-route-viewMode="@Model.ViewMode"
-                       class="btn btn-outline-primary">
-                        Następny <i class="bi bi-chevron-right"></i>
-                    </a>
+                    @if (Model.ViewMode == CalendarViewMode.Week)
+                    {
+                        <a asp-action="Calendar" asp-route-date="@Model.SelectedDate.AddDays(-7).ToString("yyyy-MM-dd")" asp-route-viewMode="Week"
+                           class="btn btn-outline-primary">
+                            <i class="bi bi-chevron-left"></i> Poprzedni tydzień
+                        </a>
+                        <a asp-action="Calendar" asp-route-viewMode="Week" class="btn btn-outline-primary">
+                            Bieżący tydzień
+                        </a>
+                        <a asp-action="Calendar" asp-route-date="@Model.SelectedDate.AddDays(7).ToString("yyyy-MM-dd")" asp-route-viewMode="Week"
+                           class="btn btn-outline-primary">
+                            Następny tydzień <i class="bi bi-chevron-right"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-action="Calendar" asp-route-date="@Model.SelectedDate.AddDays(-1).ToString("yyyy-MM-dd")" asp-route-viewMode="Day"
+                           class="btn btn-outline-primary">
+                            <i class="bi bi-chevron-left"></i> Poprzedni dzień
+                        </a>
+                        <a asp-action="Calendar" asp-route-viewMode="Day" class="btn btn-outline-primary">
+                            Dzisiaj
+                        </a>
+                        <a asp-action="Calendar" asp-route-date="@Model.SelectedDate.AddDays(1).ToString("yyyy-MM-dd")" asp-route-viewMode="Day"
+                           class="btn btn-outline-primary">
+                            Następny dzień <i class="bi bi-chevron-right"></i>
+                        </a>
+                    }
                 </div>
                 <div class="btn-group" role="group">
-                    <a asp-action="Calendar" asp-route-date="@Model.SelectedDate" asp-route-viewMode="Day"
+                    <a asp-action="Calendar" asp-route-date="@Model.SelectedDate.ToString("yyyy-MM-dd")" asp-route-viewMode="Day"
                        class="btn btn-outline-secondary @(Model.ViewMode == CalendarViewMode.Day ? "active" : "")">
                         Dzień
                     </a>
-                    <a asp-action="Calendar" asp-route-date="@Model.SelectedDate" asp-route-viewMode="Week"
+                    <a asp-action="Calendar" asp-route-date="@Model.SelectedDate.ToString("yyyy-MM-dd")" asp-route-viewMode="Week"
                        class="btn btn-outline-secondary @(Model.ViewMode == CalendarViewMode.Week ? "active" : "")">
                         Tydzień
                     </a>
@@ -66,7 +84,13 @@
             </h5>
         </div>
         <div class="card-body p-0">
-            <div class="table-responsive">
+            <div id="calendar-loading" class="text-center p-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Ładowanie...</span>
+                </div>
+                <p class="mt-2">Pobieranie rezerwacji...</p>
+            </div>
+            <div id="calendar-content" class="table-responsive" style="display: none;">
                 <table class="table table-bordered table-hover calendar-table mb-0">
                     <thead class="table-light sticky-top">
                         <tr>
@@ -119,127 +143,15 @@
                             }
                         </tr>
                     </thead>
-                    <tbody>
-                        @foreach (var hour in Model.WorkingHours)
-                        {
-                            <tr>
-                                <td class="time-column fw-bold text-center align-middle">
-                                    @hour:00 - @(hour + 1):00
-                                </td>
-                                @if (Model.ViewMode == CalendarViewMode.Week)
-                                {
-                                    @for (int dayOffset = 0; dayOffset < 7; dayOffset++)
-                                    {
-                                        var currentDay = Model.WeekStart.AddDays(dayOffset);
-                                        @foreach (var room in Model.Rooms)
-                                        {
-                                            var slotStart = new DateTime(currentDay.Year, currentDay.Month, currentDay.Day, hour, 0, 0);
-                                            var slotEnd = slotStart.AddHours(1);
-                                            var booking = Model.Bookings.FirstOrDefault(b =>
-                                            b.RoomId == room.Id &&
-                                            b.StartTime < slotEnd &&
-                                            b.EndTime > slotStart);
-
-                                            @if (booking != null)
-                                            {
-                                                var isOwner = User.Identity?.Name == booking.UserName;
-                                                <td class="booking-slot booked position-relative"
-                                                    data-booking-id="@booking.BookingId"
-                                                    data-room-name="@room.Name"
-                                                    data-user-name="@booking.UserName"
-                                                    data-start="@booking.StartTime.ToString("yyyy-MM-dd HH:mm")"
-                                                    data-end="@booking.EndTime.ToString("yyyy-MM-dd HH:mm")">
-                                                    <div class="booking-info">
-                                                        <small class="d-block text-truncate">
-                                                            <i class="bi bi-person-circle"></i> @booking.UserName
-                                                        </small>
-                                                        <small class="text-muted">
-                                                            @booking.StartTime.ToString("HH:mm") - @booking.EndTime.ToString("HH:mm")
-                                                        </small>
-                                                    </div>
-                                                    @if (isOwner || User.IsInRole("Admin"))
-                                                    {
-                                                        <button class="btn btn-sm btn-danger delete-booking-btn position-absolute top-0 end-0 m-1"
-                                                                data-booking-id="@booking.BookingId"
-                                                                title="Usuń rezerwację">
-                                                            <i class="bi bi-x-lg"></i>
-                                                        </button>
-                                                    }
-                                                </td>
-                                            }
-                                            else
-                                            {
-                                                var isPast = slotStart < DateTime.Now;
-                                                <td class="booking-slot @(isPast ? "past-slot" : "available") text-center"
-                                                    data-room-id="@room.Id"
-                                                    data-room-name="@room.Name"
-                                                    data-start="@slotStart.ToString("yyyy-MM-dd HH:mm")"
-                                                    data-end="@slotEnd.ToString("yyyy-MM-dd HH:mm")"
-                                                    @(isPast ? "" : "role='button'")>
-                                                    @if (!isPast)
-                                                    {
-                                                        <span class="text-muted small">Wolne</span>
-                                                    }
-                                                </td>
-                                            }
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    @foreach (var room in Model.Rooms)
-                                    {
-                                        var slotStart = new DateTime(Model.SelectedDate.Year, Model.SelectedDate.Month, Model.SelectedDate.Day, hour, 0, 0);
-                                        var slotEnd = slotStart.AddHours(1);
-                                        var booking = Model.Bookings.FirstOrDefault(b =>
-                                        b.RoomId == room.Id &&
-                                        b.StartTime < slotEnd &&
-                                        b.EndTime > slotStart);
-
-                                        @if (booking != null)
-                                        {
-                                            var isOwner = User.Identity?.Name == booking.UserName;
-                                            <td class="booking-slot booked position-relative"
-                                                data-booking-id="@booking.BookingId">
-                                                <div class="booking-info">
-                                                    <strong>@booking.UserName</strong><br />
-                                                    <small>@booking.StartTime.ToString("HH:mm") - @booking.EndTime.ToString("HH:mm")</small>
-                                                </div>
-                                                @if (isOwner || User.IsInRole("Admin"))
-                                                {
-                                                    <button class="btn btn-sm btn-danger delete-booking-btn"
-                                                            data-booking-id="@booking.BookingId">
-                                                        Usuń
-                                                    </button>
-                                                }
-                                            </td>
-                                        }
-                                        else
-                                        {
-                                            var isPast = slotStart < DateTime.Now;
-                                            <td class="booking-slot @(isPast ? "past-slot" : "available")"
-                                                data-room-id="@room.Id"
-                                                data-room-name="@room.Name"
-                                                data-start="@slotStart.ToString("yyyy-MM-dd HH:mm")"
-                                                data-end="@slotEnd.ToString("yyyy-MM-dd HH:mm")"
-                                                @(isPast ? "" : "role='button'")>
-                                                @if (!isPast)
-                                                {
-                                                    <i class="bi bi-plus-circle text-success">Zarezerwuj</i>
-                                                }
-                                            </td>
-                                        }
-                                    }
-                                }
-                            </tr>
-                        }
+                    <tbody id="calendar-body">
+                        <!-- ✅ Zawartość będzie generowana dynamicznie przez JavaScript -->
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    @if (!Model.Rooms.Any())
+    @if (!Model.Rooms.Any() && User.IsAdmin())
     {
         <div class="alert alert-warning mt-3">
             <i class="bi bi-exclamation-triangle"></i> Brak dostępnych sal.
@@ -268,6 +180,10 @@
                 <div class="alert alert-info">
                     <i class="bi bi-info-circle"></i> Rezerwacja zostanie przypisana do Twojego konta: <strong>@User.Identity?.Name</strong>
                 </div>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Ważne:</strong> Rezerwacja musi trwać minimum 15 minut i maksymalnie 3 godziny.
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
@@ -281,102 +197,312 @@
 
 @section Scripts {
     <script>
+        // ✅ Przekazanie danych z serwera do JavaScript
+        const calendarData = {
+            viewMode: '@Model.ViewMode',
+            selectedDate: '@Model.SelectedDate.ToString("yyyy-MM-dd")',
+            weekStart: '@Model.WeekStart.ToString("yyyy-MM-dd")',
+            weekEnd: '@Model.WeekEnd.ToString("yyyy-MM-dd")',
+            workingHours: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.WorkingHours)),
+            rooms: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Rooms)),
+            currentUser: '@User.Identity?.Name',
+            isAuthenticated: @Html.Raw(User.Identity?.IsAuthenticated == true ? "true" : "false"),
+            isAdmin: @Html.Raw(User.IsInRole("Admin") ? "true" : "false")
+        };
+
         $(document).ready(function() {
             let selectedSlot = null;
+            let bookingsCache = {};
 
-            // Obsługa kliknięcia na wolny slot
-            $('.booking-slot.available').on('click', function() {
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                        <text>
+            // ✅ Funkcja do pobierania rezerwacji z API
+            async function loadBookingsForDay(date) {
+                if (bookingsCache[date]) {
+                    return bookingsCache[date];
+                }
+
+                try {
+                    const response = await $.ajax({
+                        url: '/api/booking/getforday',
+                        type: 'GET',
+                        data: { date: date }
+                    });
+
+                    if (response.success) {
+                        bookingsCache[date] = response.bookings;
+                        console.log(`✅ Loaded ${response.count} bookings for ${date}`);
+                        return response.bookings;
+                    }
+                } catch (error) {
+                    console.error('❌ Error loading bookings:', error);
+                }
+                return [];
+            }
+
+            // ✅ Funkcja do renderowania kalendarza
+            async function renderCalendar() {
+                $('#calendar-loading').show();
+                $('#calendar-content').hide();
+
+                const tbody = $('#calendar-body');
+                tbody.empty();
+
+                if (calendarData.viewMode === 'Week') {
+                    await renderWeekView(tbody);
+                } else {
+                    await renderDayView(tbody);
+                }
+
+                $('#calendar-loading').hide();
+                $('#calendar-content').show();
+
+                // Ponowne przypisanie event handlerów
+                attachEventHandlers();
+            }
+
+            // ✅ Renderowanie widoku tygodniowego
+            async function renderWeekView(tbody) {
+                const weekDays = [];
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(calendarData.weekStart);
+                    date.setDate(date.getDate() + i);
+                    const dateStr = date.toISOString().split('T')[0];
+                    weekDays.push(dateStr);
+                }
+
+                const allBookings = await Promise.all(
+                    weekDays.map(date => loadBookingsForDay(date))
+                );
+
+                calendarData.workingHours.forEach(hour => {
+                    const row = $('<tr>');
+                    row.append(`<td class="time-column fw-bold text-center align-middle">${hour}:00 - ${hour + 1}:00</td>`);
+
+                    weekDays.forEach((dayStr, dayIndex) => {
+                        const bookingsForDay = allBookings[dayIndex];
+
+                        calendarData.rooms.forEach(room => {
+                            const slotStart = `${dayStr} ${hour.toString().padStart(2, '0')}:00`;
+                            const slotEnd = `${dayStr} ${(hour + 1).toString().padStart(2, '0')}:00`;
+
+                            const booking = findBookingForSlot(bookingsForDay, room.Id, slotStart, slotEnd);
+                            const cell = createCell(booking, room, slotStart, slotEnd);
+                            row.append(cell);
+                        });
+                    });
+
+                    tbody.append(row);
+                });
+            }
+
+            // ✅ Renderowanie widoku dziennego
+            async function renderDayView(tbody) {
+                const bookings = await loadBookingsForDay(calendarData.selectedDate);
+
+                calendarData.workingHours.forEach(hour => {
+                    const row = $('<tr>');
+                    row.append(`<td class="time-column fw-bold text-center align-middle">${hour}:00 - ${hour + 1}:00</td>`);
+
+                    calendarData.rooms.forEach(room => {
+                        const slotStart = `${calendarData.selectedDate} ${hour.toString().padStart(2, '0')}:00`;
+                        const slotEnd = `${calendarData.selectedDate} ${(hour + 1).toString().padStart(2, '0')}:00`;
+
+                        const booking = findBookingForSlot(bookings, room.Id, slotStart, slotEnd);
+                        const cell = createCell(booking, room, slotStart, slotEnd);
+                        row.append(cell);
+                    });
+
+                    tbody.append(row);
+                });
+            }
+
+            // ✅ Znajdź rezerwację dla danego slotu
+            function findBookingForSlot(bookings, roomId, slotStart, slotEnd) {
+                return bookings.find(b => {
+                    const bStart = new Date(b.startTime);
+                    const bEnd = new Date(b.endTime);
+                    const sStart = new Date(slotStart.replace(' ', 'T'));
+                    const sEnd = new Date(slotEnd.replace(' ', 'T'));
+
+                    return b.roomId === roomId && bStart < sEnd && bEnd > sStart;
+                });
+            }
+
+            // ✅ Utwórz komórkę tabeli
+            function createCell(booking, room, slotStart, slotEnd) {
+                const cell = $('<td>');
+
+                if (booking) {
+                    const isOwner = calendarData.currentUser === booking.userName;
+                    const canDelete = isOwner || calendarData.isAdmin === true;
+
+                    cell.addClass('booking-slot booked position-relative')
+                        .attr('data-booking-id', booking.bookingId)
+                        .attr('data-room-name', room.name)
+                        .attr('data-user-name', booking.userName)
+                        .attr('data-start', booking.startTime)
+                        .attr('data-end', booking.endTime);
+
+                    const bookingInfo = $('<div class="booking-info">');
+                    bookingInfo.append(`<small class="d-block text-truncate"><i class="bi bi-person-circle"></i> ${booking.userName}</small>`);
+
+                    const start = new Date(booking.startTime);
+                    const end = new Date(booking.endTime);
+                    bookingInfo.append(`<small class="text-muted">${start.toLocaleTimeString('pl-PL', {hour: '2-digit', minute: '2-digit'})} - ${end.toLocaleTimeString('pl-PL', {hour: '2-digit', minute: '2-digit'})}</small>`);
+
+                    cell.append(bookingInfo);
+
+                    if (canDelete) {
+                        const deleteBtn = $('<button>')
+                            .addClass('btn btn-sm btn-danger delete-booking-btn position-absolute top-0 end-0 m-1')
+                            .attr('data-booking-id', booking.bookingId)
+                            .attr('title', 'Usuń rezerwację')
+                            .html('<i class="bi bi-x-lg"></i>');
+                        cell.append(deleteBtn);
+                    }
+                } else {
+                    const isPast = new Date(slotStart.replace(' ', 'T')) < new Date();
+                    cell.addClass(`booking-slot ${isPast ? 'past-slot' : 'available'}`)
+                        .addClass('text-center')
+                        .attr('data-room-id', room.Id)
+                        .attr('data-room-name', room.Name)
+                        .attr('data-start', slotStart)
+                        .attr('data-end', slotEnd);
+
+                    if (!isPast) {
+                        cell.attr('role', 'button');
+                        cell.append('<span class="text-muted small">Wolne</span>');
+                    }
+                }
+
+                return cell;
+            }
+
+            // ✅ Przypisz event handlery
+            function attachEventHandlers() {
+                // Kliknięcie na wolny slot
+                $('.booking-slot.available').off('click').on('click', function() {
+                    if (calendarData.isAuthenticated === true) {
                         selectedSlot = $(this);
                         const roomName = selectedSlot.data('room-name');
                         const startTime = selectedSlot.data('start');
                         const endTime = selectedSlot.data('end');
 
                         $('#modal-room-name').text(roomName);
-                        $('#modal-datetime').text(new Date(startTime).toLocaleString('pl-PL') + ' - ' + new Date(endTime).toLocaleTimeString('pl-PL'));
+                        $('#modal-datetime').text(
+                            new Date(startTime.replace(' ', 'T')).toLocaleString('pl-PL') + ' - ' +
+                            new Date(endTime.replace(' ', 'T')).toLocaleTimeString('pl-PL')
+                        );
 
                         $('#bookingModal').modal('show');
-                        </text>
-                }
-                else
-                {
-                        <text>
+                    } else {
                         alert('Musisz być zalogowany, aby dokonać rezerwacji.');
                         window.location.href = '@Url.Action("Login", "Account")';
-                        </text>
-                }
-            });
+                    }
+                });
 
-            // Potwierdzenie rezerwacji
+                // Kliknięcie na zarezerwowany slot
+                $('.booking-slot.booked').off('click').on('click', function() {
+                    const userName = $(this).data('user-name');
+                    const roomName = $(this).data('room-name');
+                    const start = new Date($(this).data('start')).toLocaleString('pl-PL');
+                    const end = new Date($(this).data('end')).toLocaleTimeString('pl-PL');
+
+                    alert(`Sala: ${roomName}\nZarezerwowana przez: ${userName}\nCzas: ${start} - ${end}`);
+                });
+
+                // Usuwanie rezerwacji
+                $('.delete-booking-btn').off('click').on('click', function(e) {
+                    e.stopPropagation();
+
+                    if (!confirm('Czy na pewno chcesz usunąć tę rezerwację?')) {
+                        return;
+                    }
+
+                    const bookingId = $(this).data('booking-id');
+
+                    $.ajax({
+                        url: '@Url.Action("DeleteBooking", "Booking")/' + bookingId,
+                        type: 'DELETE',
+                        success: function(response) {
+                            console.log('✅ Booking deleted:', response);
+                            bookingsCache = {}; // Wyczyść cache
+                            renderCalendar(); // Odśwież kalendarz
+                        },
+                        error: function(xhr) {
+                            console.error('❌ Error deleting booking:', xhr);
+                            alert('Błąd: ' + (xhr.responseJSON?.error || 'Nie udało się usunąć rezerwacji'));
+                        }
+                    });
+                });
+            }
+
+            // ✅ Potwierdzenie rezerwacji - UŻYWA NOWEGO API
             $('#confirmBookingBtn').on('click', function() {
                 if (!selectedSlot) return;
 
-                // ✅ POPRAWIONE - NIE konwertuj na UTC!
-                const startTimeStr = selectedSlot.data('start'); // "2025-01-26 12:00"
-                const endTimeStr = selectedSlot.data('end');     // "2025-01-26 13:00"
+                const startTimeStr = selectedSlot.data('start');
+                const endTimeStr = selectedSlot.data('end');
+                        const roomIdRaw = selectedSlot.data('room-id');
 
+                 // ✅ DEBUGOWANIE
+                console.log('🔍 DEBUG - Raw room-id:', roomIdRaw);
+                console.log('🔍 DEBUG - Type of room-id:', typeof roomIdRaw);
+                console.log('🔍 DEBUG - parseInt result:', parseInt(roomIdRaw));
+                console.log('🔍 DEBUG - Start time:', startTimeStr);
+                console.log('🔍 DEBUG - End time:', endTimeStr);
                 const bookingData = {
-                    roomId: parseInt(selectedSlot.data('room-id')),
-                    // ✅ Wysyłaj string w formacie ISO bez UTC (bez 'Z' na końcu)
-                    startTime: startTimeStr.replace(' ', 'T') + ':00', // "2025-01-26T12:00:00"
-                    endTime: endTimeStr.replace(' ', 'T') + ':00'      // "2025-01-26T13:00:00"
+                    RoomId: parseInt(roomIdRaw),
+                    StartTime: startTimeStr.replace(' ', 'T') + ':00',
+                    EndTime: endTimeStr.replace(' ', 'T') + ':00'
                 };
 
-                console.log('Sending booking data:', bookingData); // ✅ Debug
+                console.log('📤 Sending booking data to API:', bookingData);
+                    console.log('📤 JSON stringified:', JSON.stringify(bookingData));
 
+                // ✅ ZMIENIONY ENDPOINT - teraz używa /api/booking/create
                 $.ajax({
-                    url: '@Url.Action("CreateBooking", "Booking")',
+                    url: '/api/booking/create',
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(bookingData),
                     success: function(response) {
-                        console.log('Booking created:', response);
+                        console.log('✅ Booking created successfully:', response);
                         $('#bookingModal').modal('hide');
-                        location.reload();
+
+                        if (response.success && response.booking) {
+                            const duration = response.booking.duration;
+                            alert(`✅ Rezerwacja została utworzona!\n\nSala: ${response.booking.roomName}\nCzas trwania: ${duration} minut`);
+                        }
+
+                        bookingsCache = {}; // Wyczyść cache
+                        renderCalendar(); // Odśwież kalendarz
                     },
                     error: function(xhr) {
-                        console.error('Error creating booking:', xhr);
-                        const errorMsg = xhr.responseJSON?.error || 'Nie udało się utworzyć rezerwacji';
-                        alert('Błąd: ' + errorMsg);
+                        console.error('❌ Error creating booking:', xhr);
+                        console.error('❌ Status:', xhr.status);
+                        console.error('❌ Response Text:', xhr.responseText);
+                        console.error('❌ Response JSON:', xhr.responseJSON);
+                        // ✅ Obsługa szczegółowych błędów walidacji
+                        if (xhr.responseJSON) {
+                            if (xhr.responseJSON.errors && Array.isArray(xhr.responseJSON.errors)) {
+                                // Walidacja nie powiodła się - wyświetl wszystkie błędy
+                                const errorMessages = xhr.responseJSON.errors.join('\n• ');
+                                alert('❌ Błędy walidacji:\n\n• ' + errorMessages);
+                            } else if (xhr.responseJSON.error) {
+                                // Pojedynczy błąd (np. kolizja terminów, brak sali)
+                                alert('❌ Błąd: ' + xhr.responseJSON.error);
+                            } else {
+                                alert('❌ Nie udało się utworzyć rezerwacji');
+                            }
+                        } else {
+                            alert('❌ Błąd połączenia z serwerem');
+                        }
                     }
                 });
             });
 
-            // Usuwanie rezerwacji
-            $('.delete-booking-btn').on('click', function(e) {
-                e.stopPropagation();
-
-                if (!confirm('Czy na pewno chcesz usunąć tę rezerwację?')) {
-                    return;
-                }
-
-                const bookingId = $(this).data('booking-id');
-
-                $.ajax({
-                    url: '@Url.Action("DeleteBooking", "Booking")/' + bookingId,
-                    type: 'DELETE',
-                    success: function(response) {
-                        console.log('Booking deleted:', response);
-                        location.reload();
-                    },
-                    error: function(xhr) {
-                        console.error('Error deleting booking:', xhr);
-                        alert('Błąd: ' + (xhr.responseJSON?.error || 'Nie udało się usunąć rezerwacji'));
-                    }
-                });
-            });
-
-            // Tooltip dla zarezerwowanych slotów
-            $('.booking-slot.booked').on('click', function() {
-                const userName = $(this).data('user-name');
-                const roomName = $(this).data('room-name');
-                const start = new Date($(this).data('start')).toLocaleString('pl-PL');
-                const end = new Date($(this).data('end')).toLocaleTimeString('pl-PL');
-
-                alert(`Sala: ${roomName}\nZarezerwowana przez: ${userName}\nCzas: ${start} - ${end}`);
-            });
+            // ✅ Inicjalizacja - załaduj kalendarz
+            renderCalendar();
         });
     </script>
 }

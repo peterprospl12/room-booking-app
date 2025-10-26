@@ -12,7 +12,6 @@ namespace Lab2.Controllers
     public class RoomController(IRoomService roomService) : Controller
     {
         [HttpGet]
-        [AllowAnonymous]
         public IActionResult Manage()
         {
             var viewModel = LoadRoomsViewModel();

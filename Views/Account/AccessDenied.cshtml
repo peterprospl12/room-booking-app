@@ -1,0 +1,26 @@
+﻿@{
+	ViewData["Title"] = "Brak dostępu";
+}
+
+<div class="container mt-5">
+	<div class="row justify-content-center">
+		<div class="col-md-6">
+			<div class="card border-danger">
+				<div class="card-header bg-danger text-white text-center">
+					<h3><i class="bi bi-shield-x"></i> Brak uprawnień</h3>
+				</div>
+				<div class="card-body text-center">
+					<p class="lead">Nie masz dostępu do tej strony.</p>
+					<p class="text-muted">Tylko administratorzy mogą zarządzać salami.</p>
+					<hr>
+					<a asp-controller="Home" asp-action="Index" class="btn btn-primary">
+						<i class="bi bi-house"></i> Strona główna
+					</a>
+					<a asp-controller="Booking" asp-action="Calendar" class="btn btn-outline-secondary">
+						<i class="bi bi-calendar"></i> Kalendarz rezerwacji
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
