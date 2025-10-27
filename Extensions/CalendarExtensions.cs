@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using Lab2.Models.DTOs;
 
-namespace Lab2.Helpers
+namespace Lab2.Extensions
 {
     public static class CalendarHelper
     {

@@ -2,6 +2,7 @@
 using Lab2.Models;
 using Lab2.Models.DTOs;
 using Lab2.Repositories;
+using System.ComponentModel.DataAnnotations;
 
 namespace Lab2.Services
 {
@@ -107,6 +108,15 @@ namespace Lab2.Services
 
         public Result<BookingDto> CreateBooking(CreateBookingDto dto, int userId)
         {
+            var validationContext = new ValidationContext(dto);
+            var validationErrors = dto.Validate(validationContext).ToList();
+
+            if (validationErrors.Any())
+            {
+                var errorMessages = validationErrors.Select(e => e.ErrorMessage);
+                return Result.Fail<BookingDto>(string.Join("; ", errorMessages));
+            }
+
             var room = repository.GetRoom(dto.RoomId);
 
             if (room == null)

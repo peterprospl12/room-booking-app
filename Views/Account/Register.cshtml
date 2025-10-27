@@ -7,6 +7,8 @@
     <div class="col-md-5">
         <h2 class="text-center mb-4">Registration</h2>
 
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
         <form asp-controller="Account" asp-action="Register" method="post">
             <div class="mb-3">
                 <label asp-for="Name" class="form-label">Name</label>
@@ -40,7 +42,7 @@
         <hr class="my-4" />
 
         <div class="text-center">
-	        <p>Do you have an account?</p>
+            <p>Do you have an account?</p>
             <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary">Login</a>
         </div>
     </div>

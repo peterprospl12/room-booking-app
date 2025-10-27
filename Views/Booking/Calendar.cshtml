@@ -18,7 +18,6 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h2>Room Booking Calendar</h2>
 
-                @* Simplified navigation *@
                 @{
                     var isWeekView = Model.ViewMode == CalendarViewMode.Week;
                     var offset = isWeekView ? 7 : 1;
@@ -97,7 +96,7 @@
                             <th class="time-column">Time</th>
                             @if (Model.ViewMode == CalendarViewMode.Week)
                             {
-                                @for (int i = 0; i < 7; i++)
+                                @for (var i = 0; i < 7; i++)
                                 {
                                     var day = Model.WeekStart.AddDays(i);
                                     var isToday = day.Date == DateTime.Today;
@@ -119,9 +118,8 @@
                             <th class="time-column"></th>
                             @if (Model.ViewMode == CalendarViewMode.Week)
                             {
-                                @for (int i = 0; i < 7; i++)
+                                @for (var i = 0; i < 7; i++)
                                 {
-                                    var day = Model.WeekStart.AddDays(i);
                                     @foreach (var room in Model.Rooms)
                                     {
                                         <th class="room-column text-center small">
@@ -303,7 +301,7 @@
 
                     cell.addClass('booking-slot booked position-relative')
                         .attr('data-booking-id', booking.bookingId)
-                        .attr('data-room-name', room.name)
+                        .attr('data-room-name', booking.roomName)
                         .attr('data-user-name', booking.userName)
                         .attr('data-start', booking.startTime)
                         .attr('data-end', booking.endTime);

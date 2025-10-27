@@ -17,10 +17,5 @@
         {
             return new DateTime(date.Year, date.Month, 1);
         }
-
-        public static DateTime GetMonthEnd(this DateTime date)
-        {
-            return date.GetMonthStart().AddMonths(1);
-        }
     }
 }

@@ -28,17 +28,8 @@ namespace Lab2.Repositories
             _users.TryAdd(admin.Id, admin);
         }
 
-        public bool AddRoom(Room room)
-        {
-            room.Id = Interlocked.Increment(ref _nextRoomId);
-            if (!_rooms.TryAdd(room.Id, room))
-            {
-                return false;
-            }
 
-            _roomBookings[room.Id] = [];
-            return true;
-        }
+        #region User
 
         public User? GetUserByEmail(string email)
         {
@@ -56,6 +47,20 @@ namespace Lab2.Repositories
         {
             _users.TryGetValue(id, out var user);
             return user;
+        }
+        #endregion
+
+        #region Room
+        public bool AddRoom(Room room)
+        {
+            room.Id = Interlocked.Increment(ref _nextRoomId);
+            if (!_rooms.TryAdd(room.Id, room))
+            {
+                return false;
+            }
+
+            _roomBookings[room.Id] = [];
+            return true;
         }
 
         public Room? GetRoom(int id)
@@ -86,6 +91,7 @@ namespace Lab2.Repositories
 
             return roomRemoved;
         }
+        #endregion
 
         #region Booking
 
@@ -143,12 +149,9 @@ namespace Lab2.Repositories
 
         public IEnumerable<Booking> GetBookingsForPeriod(DateTime start, DateTime end)
         {
-            lock (_bookingLock)
-            {
-                return _bookings.Values
-                    .Where(b => b.StartTime < end && b.EndTime > start)
-                    .ToList();
-            }
+            return _bookings.Values
+                .Where(b => b.StartTime < end && b.EndTime > start)
+                .ToList();
         }
 
         public IEnumerable<Booking> GetBookingsForRoom(int roomId)
