@@ -24,15 +24,6 @@
 		                <li class="nav-item">
 			                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
 		                </li>
-		                <li class="nav-item">
-			                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-		                </li>
-		                @if (User.IsAdmin()) 
-		                {
-			                <li class="nav-item">
-				                <a class="nav-link text-dark" asp-controller="Room" asp-action="Manage">Zarządzanie salami</a>
-			                </li>
-		                }
 	                </ul>
 					
 	                <ul class="navbar-nav">
@@ -40,7 +31,7 @@
                         {
 	                        <li class="nav-item">
 		                        <span class="nav-link">
-			                        Witaj, <strong>@User.Identity.Name</strong>
+			                        Witaj, <strong>@User.Identity?.Name</strong>
 			                        @if (User.IsAdmin())
 			                        {
 				                        <span class="badge bg-danger ms-1">Admin</span>
@@ -48,14 +39,25 @@
 		                        </span>
 	                        </li>
 	                        <li class="nav-item">
-		                        <a class="nav-link text-dark" asp-controller="Booking" asp-action="Calendar">
-			                        <i class="bi bi-calendar3"></i> Kalendarz
+		                        <a class="nav-link text-dark" asp-area="" asp-controller="Booking" asp-action="MyBookings">
+			                        <i class="bi bi-calendar-check"></i> My bookings
 		                        </a>
 	                        </li>
 	                        <li class="nav-item">
+		                        <a class="nav-link text-dark" asp-controller="Booking" asp-action="Calendar">
+			                        <i class="bi bi-calendar3"></i> Calendar
+		                        </a>
+	                        </li>
+	                        @if (User.IsAdmin()) 
+	                        {
+		                        <li class="nav-item">
+			                        <a class="nav-link text-dark" asp-controller="Room" asp-action="Manage">Room management</a>
+		                        </li>
+	                        }
+	                        <li class="nav-item">
 		                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
 			                        <button type="submit" class="btn btn-link nav-link text-dark">
-				                        <i class="bi bi-box-arrow-right"></i> Wyloguj
+										<i class="bi bi-box-arrow-right"></i> Log out
 			                        </button>
 		                        </form>
 	                        </li>
@@ -64,12 +66,12 @@
                         {
 	                        <li class="nav-item">
 		                        <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">
-			                        <i class="bi bi-box-arrow-in-right"></i> Zaloguj się
+			                        <i class="bi bi-box-arrow-in-right"></i> Log in
 		                        </a>
 	                        </li>
 	                        <li class="nav-item">
 		                        <a class="nav-link text-dark" asp-controller="Account" asp-action="Register">
-			                        <i class="bi bi-person-plus"></i> Zarejestruj się
+			                        <i class="bi bi-person-plus"></i> Register
 		                        </a>
 	                        </li>
                         }
@@ -84,11 +86,6 @@
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - Lab2 - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

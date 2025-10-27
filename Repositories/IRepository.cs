@@ -1,5 +1,4 @@
-﻿using FluentResults;
-using Lab2.Models;
+﻿using Lab2.Models;
 
 namespace Lab2.Repositories
 {

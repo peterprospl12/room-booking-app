@@ -12,4 +12,9 @@ public static class HashExtensions
         var hash = sha256.ComputeHash(bytes);
         return Convert.ToBase64String(hash);
     }
+
+    public static bool VerifyHashes(string password, string hash)
+    {
+        return ToSha256Hash(password) == hash;
+    }
 }

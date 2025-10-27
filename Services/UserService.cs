@@ -2,8 +2,6 @@
 using Lab2.Models;
 using Lab2.Models.DTOs;
 using Lab2.Repositories;
-using System.Security.Cryptography;
-using System.Text;
 using Lab2.Extensions;
 
 namespace Lab2.Services
@@ -50,7 +48,7 @@ namespace Lab2.Services
                 return Result.Fail("User with given email does not exist");
             }
 
-            if (!VerifyPassword(userDto.Password, user.PasswordHash))
+            if (!HashExtensions.VerifyHashes(userDto.Password, user.PasswordHash))
             {
                 return Result.Fail("Password does not match");
             }
@@ -65,9 +63,6 @@ namespace Lab2.Services
             return repository.GetUserByEmail(email);
         }
 
-        private bool VerifyPassword(string password, string hash)
-        {
-            return HashExtensions.ToSha256Hash(password) == hash;
-        }
+
     }
 }

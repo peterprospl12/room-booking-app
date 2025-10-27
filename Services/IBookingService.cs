@@ -7,6 +7,7 @@ namespace Lab2.Services
     {
         Result<IEnumerable<BookingDto>> GetBookingsForPeriod(DateTime viewModelPeriodStart, DateTime viewModelPeriodEnd);
         Result<IEnumerable<BookingDto>> GetBookingsForDay(DateTime date);
+        Result<IEnumerable<BookingDto>> GetUserBookings(int userId);
         Result<BookingDto> CreateBooking(CreateBookingDto dto, int userId);
         Result DeleteBooking(int id);
     }

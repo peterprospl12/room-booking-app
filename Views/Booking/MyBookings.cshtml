@@ -1,0 +1,169 @@
+﻿@model IEnumerable<Lab2.Models.DTOs.BookingDto>
+@{
+    ViewData["Title"] = "My Bookings";
+}
+
+<div class="container mt-4">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="bi bi-calendar-check"></i> My Upcoming Bookings
+                </h2>
+                <div>
+                    @if (Model.Any())
+                    {
+                        <a asp-action="ExportMyBookings" class="btn btn-success me-2" title="Export to calendar (Google, Outlook, Apple)">
+                            <i class="bi bi-download"></i> Export to Calendar (.ics)
+                        </a>
+                    }
+                    <a asp-action="Calendar" class="btn btn-primary">
+                        <i class="bi bi-calendar-plus"></i> New Booking
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-calendar-x" style="font-size: 4rem; color: #6c757d;"></i>
+                <h4 class="mt-3">No Upcoming Bookings</h4>
+                <p class="text-muted">You don't have any scheduled bookings.</p>
+                <a asp-action="Calendar" class="btn btn-primary mt-3">
+                    <i class="bi bi-calendar-plus"></i> Book a Room
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul"></i> Bookings List (@Model.Count())
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th><i class="bi bi-door-open"></i> Room</th>
+                                <th><i class="bi bi-calendar-event"></i> Date</th>
+                                <th><i class="bi bi-clock"></i> Start Time</th>
+                                <th><i class="bi bi-clock-history"></i> End Time</th>
+                                <th><i class="bi bi-hourglass"></i> Duration</th>
+                                <th><i class="bi bi-info-circle"></i> Status</th>
+                                <th class="text-center"><i class="bi bi-gear"></i> Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var booking in Model)
+                            {
+                                var duration = (booking.EndTime - booking.StartTime).TotalMinutes;
+                                var isToday = booking.StartTime.Date == DateTime.Today;
+                                var isActive = booking.StartTime <= DateTime.Now && booking.EndTime > DateTime.Now;
+                                var rowClass = isActive ? "table-success" : (isToday ? "table-info" : "");
+
+                                <tr class="@rowClass">
+                                    <td>
+                                        <strong>@booking.RoomName</strong>
+                                    </td>
+                                    <td>
+                                        @booking.StartTime.ToString("dddd, dd MMMM yyyy")
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">@booking.StartTime.ToString("HH:mm")</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">@booking.EndTime.ToString("HH:mm")</span>
+                                    </td>
+                                    <td>
+                                        @duration min
+                                    </td>
+                                    <td>
+                                        @if (isActive)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-play-circle"></i> Active
+                                            </span>
+                                        }
+                                        else if (isToday)
+                                        {
+                                            <span class="badge bg-info">
+                                                <i class="bi bi-calendar-day"></i> Today
+                                            </span>
+                                        }
+                                        else if (booking.StartTime.Date == DateTime.Today.AddDays(1))
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-calendar-event"></i> Tomorrow
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">
+                                                <i class="bi bi-calendar"></i> Upcoming
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <form asp-action="Cancel" method="post" class="d-inline"
+                                              onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+                                            <input type="hidden" name="id" value="@booking.BookingId" />
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Cancel booking">
+                                                <i class="bi bi-x-circle"></i> Cancel
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer text-muted">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small>
+                        <i class="bi bi-info-circle"></i>
+                        Only upcoming bookings are displayed (up to 360 days ahead).
+                    </small>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    .badge {
+        font-size: 0.85rem;
+        padding: 0.4em 0.6em;
+    }
+</style>

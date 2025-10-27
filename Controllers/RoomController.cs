@@ -38,7 +38,7 @@ namespace Lab2.Controllers
                 return View("Manage", model);
             }
 
-            TempData["Success"] = "Sala została dodana pomyślnie";
+            TempData["Success"] = "Room has been successfully added";
             return RedirectToAction("Manage");
         }
 
@@ -49,11 +49,11 @@ namespace Lab2.Controllers
 
             if (deleteResult.IsFailed)
             {
-                TempData["Error"] = deleteResult.Errors.FirstOrDefault()?.Message ?? "Nie udało się usunąć sali";
+                TempData["Error"] = deleteResult.Errors.FirstOrDefault()?.Message ?? "Failed to delete the room";
                 return RedirectToAction("Manage");
             }
 
-            TempData["Success"] = "Sala została usunięta pomyślnie";
+            TempData["Success"] = "Room has been deleted";
             return RedirectToAction("Manage");
         }
 
@@ -66,7 +66,7 @@ namespace Lab2.Controllers
             if (roomsResult.IsFailed)
             {
                 viewModel.Rooms = new List<RoomDto>();
-                TempData["Error"] = "Nie udało się załadować listy sal";
+                TempData["Error"] = "Failed to retrieve the list of rooms";
             }
             else
             {

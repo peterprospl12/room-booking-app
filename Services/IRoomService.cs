@@ -1,5 +1,4 @@
 ﻿using FluentResults;
-using Lab2.Models;
 using Lab2.Models.DTOs;
 
 namespace Lab2.Services

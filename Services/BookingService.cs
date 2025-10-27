@@ -1,9 +1,7 @@
-﻿using System.Runtime.InteropServices.JavaScript;
-using FluentResults;
+﻿using FluentResults;
 using Lab2.Models;
 using Lab2.Models.DTOs;
 using Lab2.Repositories;
-using Microsoft.AspNetCore.SignalR;
 
 namespace Lab2.Services
 {
@@ -64,6 +62,47 @@ namespace Lab2.Services
             var dayEnd = date.Date.AddDays(1);
 
             return GetBookingsForPeriod(dayStart, dayEnd);
+        }
+
+        public Result<IEnumerable<BookingDto>> GetUserBookings(int userId)
+        {
+            try
+            {
+                var now = DateTime.Now;
+                var bookings = repository.GetBookingsForPeriod(now, now.AddDays(360));
+
+                var userBookings = bookings
+                    .Where(b => b.UserId == userId && b.EndTime > now)
+                    .OrderBy(b => b.StartTime)
+                    .ToList();
+
+                var bookingDtos = new List<BookingDto>();
+
+                foreach (var booking in userBookings)
+                {
+                    var room = repository.GetRoom(booking.RoomId);
+                    if (room == null) continue;
+
+                    var user = repository.GetUserById(booking.UserId);
+                    if (user == null) continue;
+
+                    bookingDtos.Add(new BookingDto(
+                        booking.BookingId,
+                        booking.RoomId,
+                        room.Name,
+                        booking.UserId,
+                        user.Name,
+                        booking.StartTime,
+                        booking.EndTime
+                    ));
+                }
+
+                return Result.Ok<IEnumerable<BookingDto>>(bookingDtos);
+            }
+            catch (Exception ex)
+            {
+                return Result.Fail<IEnumerable<BookingDto>>($"Failed to retrieve user bookings: {ex.Message}");
+            }
         }
 
         public Result<BookingDto> CreateBooking(CreateBookingDto dto, int userId)

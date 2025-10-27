@@ -48,13 +48,8 @@ namespace Lab2.Repositories
         public bool AddUser(User user)
         {
             user.Id = Interlocked.Increment(ref _nextUserId);
-            
-            if (!_users.TryAdd(user.Id, user))
-            {
-                return false;
-            }
 
-            return true;
+            return _users.TryAdd(user.Id, user);
         }
 
         public User? GetUserById(int id)
@@ -97,10 +92,12 @@ namespace Lab2.Repositories
 
         public bool AddBooking(Booking booking)
         {
-            booking.BookingId = Interlocked.Increment(ref _nextBookingId);
-
             lock (_bookingLock)
             {
+
+                booking.BookingId = Interlocked.Increment(ref _nextBookingId);
+
+
                 if (!_bookings.TryAdd(booking.BookingId, booking))
                 {
                     return false;
@@ -108,7 +105,7 @@ namespace Lab2.Repositories
 
                 if (!_roomBookings.TryGetValue(booking.RoomId, out var roomBookingsList))
                 {
-                    roomBookingsList = new List<Booking>();
+                    roomBookingsList = [];
                     _roomBookings[booking.RoomId] = roomBookingsList;
                 }
                 roomBookingsList.Add(booking);
@@ -137,15 +134,21 @@ namespace Lab2.Repositories
 
         public Booking? GetBooking(int id)
         {
-            _bookings.TryGetValue(id, out var booking);
-            return booking;
+            lock (_bookingLock)
+            {
+                _bookings.TryGetValue(id, out var booking);
+                return booking;
+            }
         }
 
         public IEnumerable<Booking> GetBookingsForPeriod(DateTime start, DateTime end)
         {
-            return _bookings.Values
-                .Where(b => b.StartTime < end && b.EndTime > start)
-                .ToList();
+            lock (_bookingLock)
+            {
+                return _bookings.Values
+                    .Where(b => b.StartTime < end && b.EndTime > start)
+                    .ToList();
+            }
         }
 
         public IEnumerable<Booking> GetBookingsForRoom(int roomId)

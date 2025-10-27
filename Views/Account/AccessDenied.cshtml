@@ -1,5 +1,5 @@
 ﻿@{
-	ViewData["Title"] = "Brak dostępu";
+	ViewData["Title"] = "Access Denied";
 }
 
 <div class="container mt-5">
@@ -7,17 +7,17 @@
 		<div class="col-md-6">
 			<div class="card border-danger">
 				<div class="card-header bg-danger text-white text-center">
-					<h3><i class="bi bi-shield-x"></i> Brak uprawnień</h3>
+					<h3><i class="bi bi-shield-x"></i> Access Denied</h3>
 				</div>
 				<div class="card-body text-center">
-					<p class="lead">Nie masz dostępu do tej strony.</p>
-					<p class="text-muted">Tylko administratorzy mogą zarządzać salami.</p>
+					<p class="lead">You don't have access to this page.</p>
+					<p class="text-muted">Only administrators can manage rooms.</p>
 					<hr>
 					<a asp-controller="Home" asp-action="Index" class="btn btn-primary">
-						<i class="bi bi-house"></i> Strona główna
+						<i class="bi bi-house"></i> Home
 					</a>
 					<a asp-controller="Booking" asp-action="Calendar" class="btn btn-outline-secondary">
-						<i class="bi bi-calendar"></i> Kalendarz rezerwacji
+						<i class="bi bi-calendar"></i> Booking Calendar
 					</a>
 				</div>
 			</div>

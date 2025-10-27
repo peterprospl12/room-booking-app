@@ -2,52 +2,52 @@
 @using Lab2.ViewModels
 @model Lab2.ViewModels.CalendarViewModel
 @{
-    ViewData["Title"] = "Kalendarz rezerwacji";
+    ViewData["Title"] = "Booking Calendar";
+
+    string? GetNavigationUrl(int daysOffset, string viewMode) =>
+        Url.Action("Calendar", new
+        {
+            date = Model.SelectedDate.AddDays(daysOffset).ToString("yyyy-MM-dd"),
+            viewMode = viewMode
+        });
 }
 
 <div class="container-fluid">
     <div class="row mb-3">
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center">
-                <h2>Kalendarz rezerwacji sal</h2>
+                <h2>Room Booking Calendar</h2>
+
+                @* Simplified navigation *@
+                @{
+                    var isWeekView = Model.ViewMode == CalendarViewMode.Week;
+                    var offset = isWeekView ? 7 : 1;
+                    var currentLabel = isWeekView ? "Current Week" : "Today";
+                    var prevLabel = isWeekView ? "Previous Week" : "Previous Day";
+                    var nextLabel = isWeekView ? "Next Week" : "Next Day";
+                    var modeParam = isWeekView ? "Week" : "Day";
+                }
+
                 <div class="btn-group" role="group">
-                    @if (Model.ViewMode == CalendarViewMode.Week)
-                    {
-                        <a asp-action="Calendar" asp-route-date="@Model.SelectedDate.AddDays(-7).ToString("yyyy-MM-dd")" asp-route-viewMode="Week"
-                           class="btn btn-outline-primary">
-                            <i class="bi bi-chevron-left"></i> Poprzedni tydzień
-                        </a>
-                        <a asp-action="Calendar" asp-route-viewMode="Week" class="btn btn-outline-primary">
-                            Bieżący tydzień
-                        </a>
-                        <a asp-action="Calendar" asp-route-date="@Model.SelectedDate.AddDays(7).ToString("yyyy-MM-dd")" asp-route-viewMode="Week"
-                           class="btn btn-outline-primary">
-                            Następny tydzień <i class="bi bi-chevron-right"></i>
-                        </a>
-                    }
-                    else
-                    {
-                        <a asp-action="Calendar" asp-route-date="@Model.SelectedDate.AddDays(-1).ToString("yyyy-MM-dd")" asp-route-viewMode="Day"
-                           class="btn btn-outline-primary">
-                            <i class="bi bi-chevron-left"></i> Poprzedni dzień
-                        </a>
-                        <a asp-action="Calendar" asp-route-viewMode="Day" class="btn btn-outline-primary">
-                            Dzisiaj
-                        </a>
-                        <a asp-action="Calendar" asp-route-date="@Model.SelectedDate.AddDays(1).ToString("yyyy-MM-dd")" asp-route-viewMode="Day"
-                           class="btn btn-outline-primary">
-                            Następny dzień <i class="bi bi-chevron-right"></i>
-                        </a>
-                    }
+                    <a href="@GetNavigationUrl(-offset, modeParam)" class="btn btn-outline-primary">
+                        <i class="bi bi-chevron-left"></i> @prevLabel
+                    </a>
+                    <a asp-action="Calendar" asp-route-viewMode="@modeParam" class="btn btn-outline-primary">
+                        @currentLabel
+                    </a>
+                    <a href="@GetNavigationUrl(offset, modeParam)" class="btn btn-outline-primary">
+                        @nextLabel <i class="bi bi-chevron-right"></i>
+                    </a>
                 </div>
+
                 <div class="btn-group" role="group">
                     <a asp-action="Calendar" asp-route-date="@Model.SelectedDate.ToString("yyyy-MM-dd")" asp-route-viewMode="Day"
                        class="btn btn-outline-secondary @(Model.ViewMode == CalendarViewMode.Day ? "active" : "")">
-                        Dzień
+                        Day
                     </a>
                     <a asp-action="Calendar" asp-route-date="@Model.SelectedDate.ToString("yyyy-MM-dd")" asp-route-viewMode="Week"
                        class="btn btn-outline-secondary @(Model.ViewMode == CalendarViewMode.Week ? "active" : "")">
-                        Tydzień
+                        Week
                     </a>
                 </div>
             </div>
@@ -75,7 +75,7 @@
             <h5 class="mb-0">
                 @if (Model.ViewMode == CalendarViewMode.Week)
                 {
-                    <span>Tydzień: @Model.WeekStart.ToString("dd.MM.yyyy") - @Model.WeekEnd.ToString("dd.MM.yyyy")</span>
+                    <span>Week: @Model.WeekStart.ToString("dd.MM.yyyy") - @Model.WeekEnd.ToString("dd.MM.yyyy")</span>
                 }
                 else
                 {
@@ -86,15 +86,15 @@
         <div class="card-body p-0">
             <div id="calendar-loading" class="text-center p-5">
                 <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Ładowanie...</span>
+                    <span class="visually-hidden">Loading...</span>
                 </div>
-                <p class="mt-2">Pobieranie rezerwacji...</p>
+                <p class="mt-2">Fetching bookings...</p>
             </div>
             <div id="calendar-content" class="table-responsive" style="display: none;">
                 <table class="table table-bordered table-hover calendar-table mb-0">
                     <thead class="table-light sticky-top">
                         <tr>
-                            <th class="time-column">Godzina</th>
+                            <th class="time-column">Time</th>
                             @if (Model.ViewMode == CalendarViewMode.Week)
                             {
                                 @for (int i = 0; i < 7; i++)
@@ -137,14 +137,13 @@
                                 {
                                     <th class="room-column text-center">
                                         <div class="fw-semibold">@room.Name</div>
-                                        <div class="text-muted">Pojemność: @room.Capacity osób</div>
+                                        <div class="text-muted">Capacity: @room.Capacity people</div>
                                     </th>
                                 }
                             }
                         </tr>
                     </thead>
                     <tbody id="calendar-body">
-                        <!-- ✅ Zawartość będzie generowana dynamicznie przez JavaScript -->
                     </tbody>
                 </table>
             </div>
@@ -154,41 +153,40 @@
     @if (!Model.Rooms.Any() && User.IsAdmin())
     {
         <div class="alert alert-warning mt-3">
-            <i class="bi bi-exclamation-triangle"></i> Brak dostępnych sal.
-            <a asp-controller="Room" asp-action="Manage">Dodaj salę</a>
+            <i class="bi bi-exclamation-triangle"></i> No rooms available.
+            <a asp-controller="Room" asp-action="Manage">Add room</a>
         </div>
     }
 </div>
 
-<!-- Modal rezerwacji -->
 <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="bookingModalLabel">Nowa rezerwacja</h5>
+                <h5 class="modal-title" id="bookingModalLabel">New Booking</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Sala:</label>
+                    <label class="form-label fw-bold">Room:</label>
                     <p id="modal-room-name" class="form-control-plaintext"></p>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Data i godzina:</label>
+                    <label class="form-label fw-bold">Date and Time:</label>
                     <p id="modal-datetime" class="form-control-plaintext"></p>
                 </div>
                 <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> Rezerwacja zostanie przypisana do Twojego konta: <strong>@User.Identity?.Name</strong>
+                    <i class="bi bi-info-circle"></i> The booking will be assigned to your account: <strong>@User.Identity?.Name</strong>
                 </div>
                 <div class="alert alert-warning">
                     <i class="bi bi-exclamation-triangle"></i>
-                    <strong>Ważne:</strong> Rezerwacja musi trwać minimum 15 minut i maksymalnie 3 godziny.
+                    <strong>Important:</strong> Booking must last minimum 15 minutes and maximum 3 hours.
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="confirmBookingBtn">
-                    <i class="bi bi-check-circle"></i> Potwierdź rezerwację
+                    <i class="bi bi-check-circle"></i> Confirm Booking
                 </button>
             </div>
         </div>
@@ -197,7 +195,6 @@
 
 @section Scripts {
     <script>
-        // ✅ Przekazanie danych z serwera do JavaScript
         const calendarData = {
             viewMode: '@Model.ViewMode',
             selectedDate: '@Model.SelectedDate.ToString("yyyy-MM-dd")',
@@ -214,7 +211,6 @@
             let selectedSlot = null;
             let bookingsCache = {};
 
-            // ✅ Funkcja do pobierania rezerwacji z API
             async function loadBookingsForDay(date) {
                 if (bookingsCache[date]) {
                     return bookingsCache[date];
@@ -229,16 +225,14 @@
 
                     if (response.success) {
                         bookingsCache[date] = response.bookings;
-                        console.log(`✅ Loaded ${response.count} bookings for ${date}`);
                         return response.bookings;
                     }
                 } catch (error) {
-                    console.error('❌ Error loading bookings:', error);
+                    console.error('Error loading bookings:', error);
                 }
                 return [];
             }
 
-            // ✅ Funkcja do renderowania kalendarza
             async function renderCalendar() {
                 $('#calendar-loading').show();
                 $('#calendar-content').hide();
@@ -246,45 +240,26 @@
                 const tbody = $('#calendar-body');
                 tbody.empty();
 
-                if (calendarData.viewMode === 'Week') {
-                    await renderWeekView(tbody);
-                } else {
-                    await renderDayView(tbody);
-                }
+                const dates = calendarData.viewMode === 'Week'
+                    ? getDatesInWeek()
+                    : [calendarData.selectedDate];
 
-                $('#calendar-loading').hide();
-                $('#calendar-content').show();
-
-                // Ponowne przypisanie event handlerów
-                attachEventHandlers();
-            }
-
-            // ✅ Renderowanie widoku tygodniowego
-            async function renderWeekView(tbody) {
-                const weekDays = [];
-                for (let i = 0; i < 7; i++) {
-                    const date = new Date(calendarData.weekStart);
-                    date.setDate(date.getDate() + i);
-                    const dateStr = date.toISOString().split('T')[0];
-                    weekDays.push(dateStr);
-                }
-
-                const allBookings = await Promise.all(
-                    weekDays.map(date => loadBookingsForDay(date))
-                );
+                const allBookingsMap = {};
+                const bookingsArrays = await Promise.all(dates.map(date => loadBookingsForDay(date)));
+                dates.forEach((date, idx) => {
+                    allBookingsMap[date] = bookingsArrays[idx];
+                });
 
                 calendarData.workingHours.forEach(hour => {
                     const row = $('<tr>');
                     row.append(`<td class="time-column fw-bold text-center align-middle">${hour}:00 - ${hour + 1}:00</td>`);
 
-                    weekDays.forEach((dayStr, dayIndex) => {
-                        const bookingsForDay = allBookings[dayIndex];
-
+                    dates.forEach(dateStr => {
                         calendarData.rooms.forEach(room => {
-                            const slotStart = `${dayStr} ${hour.toString().padStart(2, '0')}:00`;
-                            const slotEnd = `${dayStr} ${(hour + 1).toString().padStart(2, '0')}:00`;
+                            const slotStart = `${dateStr} ${hour.toString().padStart(2, '0')}:00`;
+                            const slotEnd = `${dateStr} ${(hour + 1).toString().padStart(2, '0')}:00`;
 
-                            const booking = findBookingForSlot(bookingsForDay, room.Id, slotStart, slotEnd);
+                            const booking = findBookingForSlot(allBookingsMap[dateStr], room.Id, slotStart, slotEnd);
                             const cell = createCell(booking, room, slotStart, slotEnd);
                             row.append(cell);
                         });
@@ -292,30 +267,22 @@
 
                     tbody.append(row);
                 });
+
+                $('#calendar-loading').hide();
+                $('#calendar-content').show();
+                attachEventHandlers();
             }
 
-            // ✅ Renderowanie widoku dziennego
-            async function renderDayView(tbody) {
-                const bookings = await loadBookingsForDay(calendarData.selectedDate);
-
-                calendarData.workingHours.forEach(hour => {
-                    const row = $('<tr>');
-                    row.append(`<td class="time-column fw-bold text-center align-middle">${hour}:00 - ${hour + 1}:00</td>`);
-
-                    calendarData.rooms.forEach(room => {
-                        const slotStart = `${calendarData.selectedDate} ${hour.toString().padStart(2, '0')}:00`;
-                        const slotEnd = `${calendarData.selectedDate} ${(hour + 1).toString().padStart(2, '0')}:00`;
-
-                        const booking = findBookingForSlot(bookings, room.Id, slotStart, slotEnd);
-                        const cell = createCell(booking, room, slotStart, slotEnd);
-                        row.append(cell);
-                    });
-
-                    tbody.append(row);
-                });
+            function getDatesInWeek() {
+                const dates = [];
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(calendarData.weekStart);
+                    date.setDate(date.getDate() + i);
+                    dates.push(date.toISOString().split('T')[0]);
+                }
+                return dates;
             }
 
-            // ✅ Znajdź rezerwację dla danego slotu
             function findBookingForSlot(bookings, roomId, slotStart, slotEnd) {
                 return bookings.find(b => {
                     const bStart = new Date(b.startTime);
@@ -327,7 +294,6 @@
                 });
             }
 
-            // ✅ Utwórz komórkę tabeli
             function createCell(booking, room, slotStart, slotEnd) {
                 const cell = $('<td>');
 
@@ -347,7 +313,7 @@
 
                     const start = new Date(booking.startTime);
                     const end = new Date(booking.endTime);
-                    bookingInfo.append(`<small class="text-muted">${start.toLocaleTimeString('pl-PL', {hour: '2-digit', minute: '2-digit'})} - ${end.toLocaleTimeString('pl-PL', {hour: '2-digit', minute: '2-digit'})}</small>`);
+                    bookingInfo.append(`<small class="text-muted">${start.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'})} - ${end.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'})}</small>`);
 
                     cell.append(bookingInfo);
 
@@ -355,7 +321,7 @@
                         const deleteBtn = $('<button>')
                             .addClass('btn btn-sm btn-danger delete-booking-btn position-absolute top-0 end-0 m-1')
                             .attr('data-booking-id', booking.bookingId)
-                            .attr('title', 'Usuń rezerwację')
+                            .attr('title', 'Delete booking')
                             .html('<i class="bi bi-x-lg"></i>');
                         cell.append(deleteBtn);
                     }
@@ -370,16 +336,14 @@
 
                     if (!isPast) {
                         cell.attr('role', 'button');
-                        cell.append('<span class="text-muted small">Wolne</span>');
+                        cell.append('<span class="text-muted small">Available</span>');
                     }
                 }
 
                 return cell;
             }
 
-            // ✅ Przypisz event handlery
             function attachEventHandlers() {
-                // Kliknięcie na wolny slot
                 $('.booking-slot.available').off('click').on('click', function() {
                     if (calendarData.isAuthenticated === true) {
                         selectedSlot = $(this);
@@ -389,32 +353,30 @@
 
                         $('#modal-room-name').text(roomName);
                         $('#modal-datetime').text(
-                            new Date(startTime.replace(' ', 'T')).toLocaleString('pl-PL') + ' - ' +
-                            new Date(endTime.replace(' ', 'T')).toLocaleTimeString('pl-PL')
+                            new Date(startTime.replace(' ', 'T')).toLocaleString('en-US') + ' - ' +
+                            new Date(endTime.replace(' ', 'T')).toLocaleTimeString('en-US')
                         );
 
                         $('#bookingModal').modal('show');
                     } else {
-                        alert('Musisz być zalogowany, aby dokonać rezerwacji.');
+                        alert('You must be logged in to make a booking.');
                         window.location.href = '@Url.Action("Login", "Account")';
                     }
                 });
 
-                // Kliknięcie na zarezerwowany slot
                 $('.booking-slot.booked').off('click').on('click', function() {
                     const userName = $(this).data('user-name');
                     const roomName = $(this).data('room-name');
-                    const start = new Date($(this).data('start')).toLocaleString('pl-PL');
-                    const end = new Date($(this).data('end')).toLocaleTimeString('pl-PL');
+                    const start = new Date($(this).data('start')).toLocaleString('en-US');
+                    const end = new Date($(this).data('end')).toLocaleTimeString('en-US');
 
-                    alert(`Sala: ${roomName}\nZarezerwowana przez: ${userName}\nCzas: ${start} - ${end}`);
+                    alert(`Room: ${roomName}\nBooked by: ${userName}\nTime: ${start} - ${end}`);
                 });
 
-                // Usuwanie rezerwacji
                 $('.delete-booking-btn').off('click').on('click', function(e) {
                     e.stopPropagation();
 
-                    if (!confirm('Czy na pewno chcesz usunąć tę rezerwację?')) {
+                    if (!confirm('Are you sure you want to delete this booking?')) {
                         return;
                     }
 
@@ -424,84 +386,56 @@
                         url: '@Url.Action("DeleteBooking", "Booking")/' + bookingId,
                         type: 'DELETE',
                         success: function(response) {
-                            console.log('✅ Booking deleted:', response);
-                            bookingsCache = {}; // Wyczyść cache
-                            renderCalendar(); // Odśwież kalendarz
+                            bookingsCache = {};
+                            renderCalendar();
                         },
                         error: function(xhr) {
-                            console.error('❌ Error deleting booking:', xhr);
-                            alert('Błąd: ' + (xhr.responseJSON?.error || 'Nie udało się usunąć rezerwacji'));
+                            alert('Error: ' + (xhr.responseJSON?.error || 'Failed to delete booking'));
                         }
                     });
                 });
             }
 
-            // ✅ Potwierdzenie rezerwacji - UŻYWA NOWEGO API
             $('#confirmBookingBtn').on('click', function() {
                 if (!selectedSlot) return;
 
-                const startTimeStr = selectedSlot.data('start');
-                const endTimeStr = selectedSlot.data('end');
-                        const roomIdRaw = selectedSlot.data('room-id');
-
-                 // ✅ DEBUGOWANIE
-                console.log('🔍 DEBUG - Raw room-id:', roomIdRaw);
-                console.log('🔍 DEBUG - Type of room-id:', typeof roomIdRaw);
-                console.log('🔍 DEBUG - parseInt result:', parseInt(roomIdRaw));
-                console.log('🔍 DEBUG - Start time:', startTimeStr);
-                console.log('🔍 DEBUG - End time:', endTimeStr);
                 const bookingData = {
-                    RoomId: parseInt(roomIdRaw),
-                    StartTime: startTimeStr.replace(' ', 'T') + ':00',
-                    EndTime: endTimeStr.replace(' ', 'T') + ':00'
+                    RoomId: parseInt(selectedSlot.data('room-id')),
+                    StartTime: selectedSlot.data('start').replace(' ', 'T') + ':00',
+                    EndTime: selectedSlot.data('end').replace(' ', 'T') + ':00'
                 };
 
-                console.log('📤 Sending booking data to API:', bookingData);
-                    console.log('📤 JSON stringified:', JSON.stringify(bookingData));
-
-                // ✅ ZMIENIONY ENDPOINT - teraz używa /api/booking/create
                 $.ajax({
                     url: '/api/booking/create',
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(bookingData),
                     success: function(response) {
-                        console.log('✅ Booking created successfully:', response);
                         $('#bookingModal').modal('hide');
 
                         if (response.success && response.booking) {
-                            const duration = response.booking.duration;
-                            alert(`✅ Rezerwacja została utworzona!\n\nSala: ${response.booking.roomName}\nCzas trwania: ${duration} minut`);
+                            alert(`Booking created successfully!\n\nRoom: ${response.booking.roomName}\nDuration: ${response.booking.duration} minutes`);
                         }
 
-                        bookingsCache = {}; // Wyczyść cache
-                        renderCalendar(); // Odśwież kalendarz
+                        bookingsCache = {};
+                        renderCalendar();
                     },
                     error: function(xhr) {
-                        console.error('❌ Error creating booking:', xhr);
-                        console.error('❌ Status:', xhr.status);
-                        console.error('❌ Response Text:', xhr.responseText);
-                        console.error('❌ Response JSON:', xhr.responseJSON);
-                        // ✅ Obsługa szczegółowych błędów walidacji
                         if (xhr.responseJSON) {
                             if (xhr.responseJSON.errors && Array.isArray(xhr.responseJSON.errors)) {
-                                // Walidacja nie powiodła się - wyświetl wszystkie błędy
-                                const errorMessages = xhr.responseJSON.errors.join('\n• ');
-                                alert('❌ Błędy walidacji:\n\n• ' + errorMessages);
+                                alert('Validation errors:\n\n• ' + xhr.responseJSON.errors.join('\n• '));
                             } else if (xhr.responseJSON.error) {
-                                // Pojedynczy błąd (np. kolizja terminów, brak sali)
-                                alert('❌ Błąd: ' + xhr.responseJSON.error);
+                                alert('Error: ' + xhr.responseJSON.error);
                             } else {
-                                alert('❌ Nie udało się utworzyć rezerwacji');
+                                alert('Failed to create booking');
                             }
                         } else {
-                            alert('❌ Błąd połączenia z serwerem');
+                            alert('Server connection error');
                         }
                     }
                 });
             });
 
-            // ✅ Inicjalizacja - załaduj kalendarz
             renderCalendar();
         });
     </script>
