@@ -29,7 +29,7 @@ namespace Lab2.Controllers
             var roomsResult = roomService.GetAllRooms();
 
             viewModel.Rooms = roomsResult.IsSuccess ? roomsResult.Value : new List<RoomDto>();
-            viewModel.Bookings = (List<BookingDto>)[]; 
+            viewModel.Bookings = (List<BookingDto>)[];
 
             return View(viewModel);
         }

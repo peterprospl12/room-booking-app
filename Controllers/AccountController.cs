@@ -93,7 +93,7 @@ namespace Lab2.Controllers
             );
 
             var result = userService.RegisterUser(dto);
-            
+
             if (result.IsFailed)
             {
                 return HandleFailedResult(result, model);

@@ -1,5 +1,5 @@
 ﻿using Lab2.Models.DTOs;
-using Lab2.Extensions; 
+using Lab2.Extensions;
 
 namespace Lab2.ViewModels
 {

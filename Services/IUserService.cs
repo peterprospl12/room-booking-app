@@ -6,7 +6,7 @@ namespace Lab2.Services
     public interface IUserService
     {
         Result<UserDto> RegisterUser(RegisterUserDto userDto);
-        Result<UserDto> ValidateUser(LoginUserDto userDto);  
+        Result<UserDto> ValidateUser(LoginUserDto userDto);
 
     }
 }

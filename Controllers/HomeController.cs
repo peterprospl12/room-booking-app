@@ -15,7 +15,7 @@ namespace Lab2.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")] 
+        [Authorize(Roles = "Admin")]
         public IActionResult Init([FromQuery] string confirm)
         {
             if (confirm != "yes-i-am-sure")

@@ -62,7 +62,7 @@ namespace Lab2.Controllers
             var roomsResult = roomService.GetAllRooms();
 
             var viewModel = existingModel ?? new RoomManageViewModel();
-            
+
             if (roomsResult.IsFailed)
             {
                 viewModel.Rooms = new List<RoomDto>();

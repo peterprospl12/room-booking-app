@@ -108,7 +108,7 @@ namespace Lab2.Services
         public Result<BookingDto> CreateBooking(CreateBookingDto dto, int userId)
         {
             var room = repository.GetRoom(dto.RoomId);
-            
+
             if (room == null)
             {
                 return Result.Fail<BookingDto>("Room not found");

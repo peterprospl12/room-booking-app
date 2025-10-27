@@ -69,11 +69,11 @@ namespace Lab2.Helpers
                 return string.Empty;
 
             return text
-                .Replace("\\", "\\\\")   
-                .Replace(",", "\\,")      
-                .Replace(";", "\\;")      
-                .Replace("\n", "\\n")     
-                .Replace("\r", "");       
+                .Replace("\\", "\\\\")
+                .Replace(",", "\\,")
+                .Replace(";", "\\;")
+                .Replace("\n", "\\n")
+                .Replace("\r", "");
         }
     }
 }
